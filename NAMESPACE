@@ -1,0 +1,8 @@
+exportPattern("^[^\\.]")
+useDynLib(ManyIV)
+export(SJIVEfit)
+importFrom("grDevices", dev.cur)
+importFrom("graphics", abline, lines, par, persp, plot,points)
+importFrom("stats", dist, nlm, optim, optimize, pchisq,pnorm,qnorm,rgamma,rnorm, uniroot, var)
+importFrom("methods","is", "new", "slot<-")
+

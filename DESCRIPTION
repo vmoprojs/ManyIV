@@ -1,0 +1,18 @@
+Package: ManyIV
+Version: 1.0.0
+Date: 2019-09-14
+Title: IV Estimation and Inference
+Authors@R: c(person("Federico", "Crudu", role = c("aut", "cre"),
+                     email = "federico.crudu@gmail.com"),
+              person("Víctor", "Morales-Oñate", role = "aut",email = "victor.morales@uv.cl"))
+Author: Federico Crudu [aut, cre],
+  Víctor Morales-Onate [aut]
+Maintainer: Victor Morales Onate <victor.morales@uv.cl>
+Depends: R (>= 2.12.0) 
+Description: IV-based estimators and test statistics that will be progressively introduced in this routines.
+Imports: methods
+Suggests: scatterplot3d, urca
+License: GPL (>= 2)
+URL: https://github.com/vmoprojs/ManyIV 
+Repository: Github
+Encoding: UTF-8
