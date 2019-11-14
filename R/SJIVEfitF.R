@@ -19,7 +19,7 @@
 #########################################################################
 
 
-SJIVEfit<-function(y=NULL,X1=NULL,X2=NULL,Z1=NULL,Z2 = NULL,full=2)
+SJIVEfitF<-function(y=NULL,X1=NULL,X2=NULL,Z1=NULL,Z2 = NULL,full=2)
 {
   
   X2<-Z2 # included instruments
@@ -39,22 +39,23 @@ SJIVEfit<-function(y=NULL,X1=NULL,X2=NULL,Z1=NULL,Z2 = NULL,full=2)
   I.n<-diag(1,length(y)) # nxn identity matrix
   
   Mz<- I.n-Pz # projection matrix
-  G<-((Dp)%*%diag(1/diag(I.n-Dp)))
-  Delta <- Pz%*%G%*%Pz-(Pz%*%G+G%*%Pz)/2
+  G<-eiMu((Dp),diag(1/diag(I.n-Dp)))
+  Delta <- eiMu(eiMu(Pz,G),Pz)-(eiMu(Pz,G)+eiMu(G,Pz))/2
   A<- Pz + Delta
-  B<- Mz%*%G%*%Mz
+  B<- eiMu(eiMu(Mz,G),Mz)
   C<- A-B
   
   ### minimum eigenvalue problem ##########################################
 
-  X2X2<-t(X2)%*%X2;X2X2.inv<-solve(X2X2)
-  Px2<-X2%*%(X2X2.inv)%*%t(X2) # projection matrix
+  X2X2<-eiMu(t(X2),X2)
+  X2X2.inv<-solve(X2X2)
+  Px2<-eiMu(eiMu(X2,(X2X2.inv)),t(X2)) # projection matrix
   
-  C.star<- C-A%*%Px2%*%A
+  C.star<- C-eiMu(eiMu(A,Px2),A)
   yX1<-cbind(y,X1)
-  Q1<-t(yX1)%*%B%*%yX1
-  Q2<-t(yX1)%*%C.star%*%yX1
-  Q3<-solve(Q1)%*%Q2
+  Q1<-eiMu(eiMu(t(yX1),B),yX1)
+  Q2<-eiMu(eiMu(t(yX1),C.star),yX1)
+  Q3<-eiMu(solve(Q1),Q2)
   
   min.lambda<- min(eigen(Q3)$values) # minimum eigenvalue
   #########################################################################
@@ -62,26 +63,28 @@ SJIVEfit<-function(y=NULL,X1=NULL,X2=NULL,Z1=NULL,Z2 = NULL,full=2)
   
   ### SJIVE/SJEF estimator ################################################
   
-  XCX<-t(X)%*%C%*%X;XCy<-t(X)%*%C%*%y
-  XBX<-t(X)%*%B%*%X;XBy<-t(X)%*%B%*%y
+  XCX<-eiMu(eiMu(t(X),C),X)
+  XCy<-eiMu(eiMu(t(X),C),y)
+  XBX<-eiMu(eiMu(t(X),B),X)
+  XBy<-eiMu(eiMu(t(X),B),y)
   alpha<-full # Fuller parameter; alpha=0 computes the SJIVE estimator
   traceB<-sum(diag(B))
   lambda.hat<-min.lambda-alpha/traceB
   
   # beta.hat is the SJIVE/SJEF estimator
-  beta.hat<-solve(XCX-lambda.hat*XBX)%*%(XCy-lambda.hat*XBy)
+  beta.hat<-eiMu(solve(XCX-lambda.hat*XBX),(XCy-lambda.hat*XBy))
   
   #########################################################################
   
   C.hat<-C-lambda.hat*B
-  XC.hatX<-t(X)%*%C.hat%*%X
+  XC.hatX<-eiMu(eiMu(t(X),C.hat),X)
   I.1plusg<-diag(1,(1+ncol(X))) # (1+g)x(1+g) identity matrix
   I0<-I.1plusg[,-1]
   b0<-c(1,-beta.hat)
   b1<-cbind(b0,I0)
   yX<-cbind(y,X)
-  Omega.hat<-t(yX)%*%B%*%yX/ncol(Z)
-  Sigma.hat<-t(b1)%*%Omega.hat%*%b1
+  Omega.hat<-eiMu(t(yX),B)%*%yX/ncol(Z)
+  Sigma.hat<-eiMu(eiMu(t(b1),Omega.hat),b1)
   sigma11.hat<-as.numeric(Sigma.hat[1,1])
   sigma12.hat<-Sigma.hat[1,2:(1+ncol(X))]
   epsilon.hat<- y-X%*%beta.hat
@@ -89,18 +92,18 @@ SJIVEfit<-function(y=NULL,X1=NULL,X2=NULL,Z1=NULL,Z2 = NULL,full=2)
   X.tilde<- X-sigma11.hat*epsilon.hat%*%sigma12.hat
   C2<-C*C
   D.eps.hat<-diag(as.vector(epsilon.hat))
-  D.eps.hat2<-D.eps.hat%*%D.eps.hat
+  D.eps.hat2<-eiMu(D.eps.hat,D.eps.hat)
   
   ### variance covariance estimator #######################################
   
-  Meat1<-C%*%D.eps.hat2%*%C
-  Meat2<-D.eps.hat%*%C2%*%D.eps.hat
+  Meat1<-eiMu(eiMu(C,D.eps.hat2),C)
+  Meat2<-eiMu(eiMu(D.eps.hat,C2),D.eps.hat)
   Meat<-Meat1+Meat2
-  Bread1<-t(X)%*%C.hat%*%X
-  Bread<-X.tilde%*%solve(Bread1)
+  Bread1<-eiMu(eiMu(t(X),C.hat),X)
+  Bread<-eiMu(X.tilde,solve(Bread1))
   
   # estimator of the variance covariance matrix
-  Var.beta.hat<-t(Bread)%*%Meat%*%Bread 
+  Var.beta.hat<-eiMu(eiMu(t(Bread),Meat),Bread )
   return(list (beta = beta.hat,variance = Var.beta.hat))
 }
 
