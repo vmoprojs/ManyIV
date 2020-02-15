@@ -1,5 +1,3 @@
-#include <RcppArmadillo.h>
-#include <RcppEigen.h>
 #include "header.h"
 
 

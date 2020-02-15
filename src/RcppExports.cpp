@@ -1,5 +1,4 @@
-#include <RcppArmadillo.h>
-#include <RcppEigen.h>
+#include "header.h"
 
 /*https://stackoverflow.com/questions/35923787/fast-large-matrix-multiplication-in-r
  */
